@@ -19,6 +19,9 @@ class DataPlatform():
         self.test_data = pd.read_csv(config.test_data_path)
         self.over_sampling_data = None
 
+        if self.config.under_sampling_flag:
+            self.train_data = self.under_sampling(self.config.mx_label_size)
+        
         ## Concat two sentence
         self.concat_text(self.train_data)
         self.concat_text(self.val_data)
@@ -36,7 +39,6 @@ class DataPlatform():
             self.label_encoding_full()
             self.make_full_clasi_data_loader()
             
-
     def concat_text(self, data):
         store = []
         for i in range(len(data)):
@@ -101,12 +103,39 @@ class DataPlatform():
     def make_clasi_part_data_loader(self):
         return
 
-    def under_sampling(self):
-        return
+    def under_sampling(self, mx_size):
+        label_encoder = LabelEncoder()
+        label_encoder.fit(self.train_data["label"])
+        lables = label_encoder.classes_
+        length = len(labels)
+        
+        temp_labels = train_data["label"]
+        counter = temp_labels.value.counts()
+        
+        data_store = []
+        
+        for i in range(length):
+            if counter[labels[i]] > mx_size:
+                now_data = self.train_data.loc[self.train_data["label"] == labels[i]]
+                sampling = now_data.sample(n=mx_size, replace=False) # 비복원 추출
+                data_store.append(sampling)
+            else:
+                now_data = self.train_data.loc[self.train_data["label"] == labels[i]]
+                data_store.append(now_data)
+        
+        out = data_store[0]
+        for i in range(1, len(data_store)):
+            temp = data_store[i]
+            out = pd.concat([out, temp], axis = 0)
+        
+        return out
 
     def over_sampling(self):
         return
-
+    
+    def space_control(self):
+        return
+    
     def get_train_loader(self): return self.train_loader
     def get_val_loader(self): return self.val_loader
     def get_label(self): return self.labels

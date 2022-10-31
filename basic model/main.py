@@ -7,6 +7,7 @@ import pandas as pd
 from Data import DataPlatform
 from ModelSelection import Selection
 from Trainer import Trainer
+from Test import Test
 
 def set_seeds(seed=random.randrange(1, 10000)):
     random.seed(seed)
@@ -33,6 +34,8 @@ if __name__ == "__main__":
     parser.add_argument("--reg_plus_clasifi_flag", type=bool)
     parser.add_argument("--clasifi_2_clasifi_flag", type=bool)
     parser.add_argument("--clasifi_2_reg_flag", type=bool)
+    parser.add_argument("--under_sampling_flag", type=bool)
+    parser.add_argument("--mx_label_size", type=int)
     parser.add_argument("--lr", type=float)
     parser.add_argument("--eps", type=float)
     parser.add_argument("--save_path", type=str)
@@ -69,3 +72,14 @@ if __name__ == "__main__":
         print("##########################################################")
         print("----------------------epoch {} start----------------------".format(e + 1))
         trainer.train()
+    
+    print("#########################################")
+    print("#########################################")
+    print("--------------- Finished ----------------")
+    test = Test(config, data_platform)
+    test.test()
+    test.make_submission_file()
+    print("---------- Submission File OK ----------")
+    
+    
+    
