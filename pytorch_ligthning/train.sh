@@ -1,0 +1,1 @@
+python3 DM_train.py --config base_config
