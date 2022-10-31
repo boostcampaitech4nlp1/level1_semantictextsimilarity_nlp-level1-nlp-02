@@ -1,11 +1,15 @@
-import torch
+import datetime
+
 import numpy as np
 import pandas as pd
-import datetime
+
+import torch
 import torch.nn.functional as F
 import torch.nn as nn
 from torch.utils.data import Dataset, DataLoader
 from transformers import AdamW
+
+from utils.Earlystopping import EarlyStopping
 
 #############
 ## Trainer ## 
@@ -24,7 +28,7 @@ class Trainer():
         ## Data Loader
         self.train_loader = train_loader
         self.val_loader = val_loader
-
+        
         ## Optimizer
         self.optimizer = AdamW(
             self.model.parameters(),
@@ -37,7 +41,9 @@ class Trainer():
         self.bi_classification_loss_fn = nn.BCELoss().to(self.device)
         self.multi_classification_loss_fn = nn.CrossEntropyLoss().to(self.device)
 
-    def train(self):
+        self.early_stopping = EarlyStopping(path = config.save_path, patience = 7, verbose = True)
+        
+    def train(self,epoch):
         batch_count = 0
         train_loss_store = []
 
@@ -57,7 +63,10 @@ class Trainer():
             ## Train according to the method
             ## Caculate the loss
             if self.config.reg_plus_clasifi_flag:
-                loss = self.reg_plus_clasifi(out_score, out_bi_class, score, bi_class)
+                try:
+                    loss = self.reg_plus_clasifi(out_score, out_bi_class, score, bi_class)
+                except:
+                    continue
             elif self.config.only_reg_flag:
                 loss = self.only_reg(out_score, score)
             elif self.config.only_clasifi_flag:
@@ -80,7 +89,10 @@ class Trainer():
                 eval_loss = self.eval()
                 print("Batch {} over".format(batch_count * self.config.batch_size))
                 print("@@@@@@ Now evaluation loss : {} @@@@@@@".format(eval_loss))
-                self.save()
+                # self.save() # early stopping 코드에서 현재 최고 모델을 저장
+                if epoch >= 5 and self.early_stopping.early_stop:
+                    print("Early stopping")
+                    break
 
     def eval(self):
         total_loss = 0
@@ -113,6 +125,7 @@ class Trainer():
             
             ## Data size
             total_count += self.config.batch_size
+        self.early_stopping(total_loss/total_count,self.model)
             
         return total_loss / total_count
 
