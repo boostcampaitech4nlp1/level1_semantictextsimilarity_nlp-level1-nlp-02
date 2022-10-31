@@ -1,0 +1,23 @@
+path:
+    train_path: /opt/ml/code/train_data_spell_check.csv
+    dev_path: /opt/ml/code/dev_data_spell_check.csv
+    test_path: /opt/ml/code/dev_data_spell_check.csv
+    predict_path: /opt/ml/code/test_data_spell_check.csv
+
+data:
+    shuffle: True
+    augmentation: # adea, bt 등등
+    
+model:
+    model_name: klue/roberta-small
+    saved_name: base_model
+
+train:
+    seed: 2
+    gpus: 1
+    batch_size: 16
+    max_epoch: 10
+    learning_rate: 1e-5
+    logging_step: 1
+    weight_decay: 0.01
+    eps:  1e-8
