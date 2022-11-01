@@ -101,6 +101,8 @@ class Trainer():
         total_loss = 0
         total_count = 0
         
+        store = []
+        
         for idz, attentions, token_types, score, bi_class in self.val_loader:
             ## Load to cpu or gpu
             idz = idz.to(self.device)
@@ -120,11 +122,15 @@ class Trainer():
             elif self.config.only_clasifi_flag:
                 loss = self.multi_classification_loss_fn(out_score, score).detach()
             
+            ## Store the out_score
+            store.append(out_score.detach())
+            
             ## Sum of Loss
             total_loss += loss
             
             ## Data size
             total_count += self.config.batch_size
+            
         self.early_stopping(total_loss/total_count,self.model)
             
         return total_loss / total_count

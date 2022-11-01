@@ -56,11 +56,6 @@ class DataPlatform():
         self.train_data["full-class"] = label_encoder.transform(self.train_data["label"].values)
         self.val_data["full-class"] = label_encoder.transform(self.val_data["label"].values)
         self.labels = label_encoder.classes_
-        
-    def label_encoding_part(self):
-        self.train_data["part-class"] = -1
-        self.val_data["part-class"] = -1
-        return
     
     def make_reg_clasi_data_loader(self):
         '''''
@@ -99,18 +94,15 @@ class DataPlatform():
             shuffle = True,
             batch_size = self.config.batch_size,
         )
-    
-    def make_clasi_part_data_loader(self):
-        return
 
     def under_sampling(self, mx_size):
         label_encoder = LabelEncoder()
         label_encoder.fit(self.train_data["label"])
-        lables = label_encoder.classes_
+        labels = label_encoder.classes_
         length = len(labels)
         
-        temp_labels = train_data["label"]
-        counter = temp_labels.value.counts()
+        temp_labels = self.train_data["label"]
+        counter = temp_labels.value_counts()
         
         data_store = []
         
@@ -131,9 +123,6 @@ class DataPlatform():
         return out
 
     def over_sampling(self):
-        return
-    
-    def space_control(self):
         return
     
     def get_train_loader(self): return self.train_loader

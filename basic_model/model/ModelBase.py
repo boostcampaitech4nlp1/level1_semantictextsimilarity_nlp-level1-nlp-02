@@ -10,7 +10,7 @@ class Base(nn.Module):
         super(Base, self).__init__()
 
         ## Dimension
-        self.first_in = 768
+        self.first_in = first_in
         self.h_dim = 512
         self.classification_dim = 1
         self.score_dim = 1
