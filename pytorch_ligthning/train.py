@@ -15,11 +15,46 @@ import pytorch_lightning as pl
 from omegaconf import OmegaConf
 import wandb
 from pytorch_lightning.loggers import WandbLogger
+import wandb
 
 import os
 os.environ['CUDA_LAUNCH_BLOCKING'] = "1"
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
+sweep_config = {
+    'method': 'random', # random: 임의의 값의 parameter 세트를 선택
+    'parameters': {
+        'learning_rate': {
+        # a flat distribution between 0 and 0.1
+        'distribution': 'uniform',
+        'min': 5e-7,
+        'max': 5e-5
+        },
+        'eps': {
+        # a flat distribution between 0 and 0.1
+        'distribution': 'uniform',
+        'min': 1e-8,
+        'max': 1e-7
+        },
+        'weight_decay': {
+        'distribution' :'uniform',
+        'min': 0.01,
+        'max': 0.1,
+        },
+        'dropout': {
+            'values': [0.05,0.1,0.2,0.3]
+            },
+        'beta': {
+        'distribution' :'uniform',
+        'min': 0.5,
+        'max': 0.8,
+        }
+    },
+    
+}
+
+sweep_config['metric'] = {'name':'val_pearson', 'goal':'maximize'}  # pearson 점수가 최대화가 되는 방향으로 학습을 진행합니다.
+    
 class Dataset(torch.utils.data.Dataset): ## __getitem__, __len__ 꼭 필요하다. len만큼 가져옴
     def __init__(self, inputs, targets=[], targets_2 = []):
         self.inputs = inputs
@@ -132,13 +167,11 @@ class Dataloader(pl.LightningDataModule):
 class Model(pl.LightningModule):
     def __init__(self, config):
         super().__init__()
-        self.save_hyperparameters() ## call this to save (model_name, lr, bce) to the checkpoint
-        
-        self.model_name = config.model.model_name
-        self.lr = config.train.learning_rate
-        
-        self.weight_decay = config.train.weight_decay
-        self.eps = config.train.eps
+        # self.save_hyperparameters() ## call this to save (model_name, lr, bce) to the checkpoint
+        self.model_name = 'monologg/koelectra-base-v3-discriminator' # koelectra or klue/roberta-large
+        self.lr = config.learning_rate
+        self.weight_decay = config.weight_decay
+        self.eps = config.eps
         # 사용할 모델을 호출합니다. ## AutoModelForSequenceClassification을 꼭 쓸 필요없다.
         self.plm = transformers.AutoModelForSequenceClassification.from_pretrained(
             pretrained_model_name_or_path=self.model_name, num_labels=1)
@@ -148,6 +181,8 @@ class Model(pl.LightningModule):
         
         self.sigmoid = nn.Sigmoid()
         
+        self.beta = 0.65
+
 ## pre_trained model에 data를 입력하고 output을 반환하는 코드이다.
     def forward(self, x):
         y = self.plm(x)['logits']
@@ -161,7 +196,7 @@ class Model(pl.LightningModule):
         logits, logits_bi = self(inputs)
         loss_regression = self.regression_loss_func(logits, target.float())
         loss_classification = self.binary_loss_func(logits_bi, target_bi.float())
-        loss = 0.65 * loss_regression + 0.35 * loss_classification
+        loss = self.beta * loss_regression + (1-self.beta) * loss_classification
         self.log("train_loss", loss) ## train_loss라는 이름으로 log를 남기자. wandB에 자동으로 남게됨
         return loss
     
@@ -172,8 +207,9 @@ class Model(pl.LightningModule):
         
         loss_regression = self.regression_loss_func(logits, target.float())
         loss_classification = self.binary_loss_func(logits_bi, target_bi.float())
-        loss = 0.65 * loss_regression + 0.35 * loss_classification
+        loss = self.beta * loss_regression + (1-self.beta) * loss_classification
         self.log("val_loss", loss)
+        # print('-'*100)
         self.log("val_pearson", torchmetrics.functional.pearson_corrcoef(logits.squeeze(), target.squeeze()))
         return loss
     
@@ -201,16 +237,43 @@ if __name__ == '__main__':
     args, _ = parser.parse_known_args()
     cfg = OmegaConf.load(f'./config/{args.config}.yaml')
     # wandb logger 설정
+    
     wandb.login()
-    wandb_logger = WandbLogger(name='gustn9609', project='nlp2조_baseline_klue_roberta_small')
+    # project = "test_hs2"  # W&B project name here
+    # entity = 'nlp2'  # your W&B username or teamname here
+    # wandb_logger = WandbLogger(name='nlp2', project='test_hs2')
     # dataloader와 model을 생성합니다.
-    dataloader = Dataloader(cfg.model.model_name, cfg.train.batch_size, cfg.data.shuffle, cfg.path.train_path, cfg.path.dev_path,
-                            cfg.path.test_path, cfg.path.predict_path)
-    model = Model(cfg)
+    sweep_id = wandb.sweep(
+    sweep=sweep_config,     # config 딕셔너리를 추가합니다.
+    project='test_hs_final', # project의 이름을 추가합니다.
+    entity='nlp2'
+    )    
+    
+    def sweep_train(config=None):
+        with wandb.init(config=config):
+        # with wandb.init(config=config):
+            sweep_config = wandb.config
+            dataloader = Dataloader(cfg.model.model_name, cfg.train.batch_size, cfg.data.shuffle, cfg.path.train_path, cfg.path.dev_path,
+                                cfg.path.test_path, cfg.path.predict_path)
+            model = Model(sweep_config)
+            wandb_logger = WandbLogger(project="test_hs_final")
+
+            trainer = pl.Trainer(gpus=cfg.train.gpus, max_epochs=cfg.train.max_epoch, logger=wandb_logger, log_every_n_steps=cfg.train.logging_step) ##logger추가
+            trainer.fit(model=model, datamodule=dataloader)
+            trainer.test(model=model, datamodule=dataloader)
+            
+            torch.save(model, f'{cfg.model.model_name}.pt')
+    
     # gpu가 없으면 'gpus=0'을, gpu가 여러개면 'gpus=4'처럼 사용하실 gpu의 개수를 입력해주세요
-    trainer = pl.Trainer(gpus=cfg.train.gpus, max_epochs=cfg.train.max_epoch, logger=wandb_logger, log_every_n_steps=cfg.train.logging_step) ##logger추가
+    
     # Train part
-    trainer.fit(model=model, datamodule=dataloader)
-    trainer.test(model=model, datamodule=dataloader)
+    
+
+    wandb.agent(
+    sweep_id=sweep_id,      # sweep의 정보를 입력하고
+    function=sweep_train,   # train이라는 모델을 학습하는 코드를
+    count=5                 # 총 5회 실행해봅니다.
+    )
     # 학습이 완료된 모델을 저장합니다. ## 'model.pt'라는 file에 저장한다.
-    torch.save(model, f'{cfg.model.saved_name}.pt')
+    
+    
