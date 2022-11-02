@@ -18,7 +18,8 @@ class Test():
         
         ## Get model and tokenizer
         selection = Selection(self.config.model_name, self.config)
-        self.model, self.tokenizer = selection.get()
+        self.model = selection.get()
+        self.tokenizer = selection.unk_tokenizer_add(config)
         self.model.load_state_dict(torch.load(self.config.save_path))
         self.model.to(self.device)
         

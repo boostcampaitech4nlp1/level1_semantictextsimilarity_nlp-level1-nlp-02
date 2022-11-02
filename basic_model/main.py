@@ -59,7 +59,8 @@ if __name__ == "__main__":
 
     ## Get transformer & tokenizer
     selection = Selection(config.model_name, config)
-    model, tokenizer = selection.get()
+    model = selection.get()
+    tokenizer = selection.unk_tokenizer_add(config)
 
     ## Get Data platform
     data_platform = DataPlatform(config, tokenizer)
