@@ -41,9 +41,10 @@ class DataPlatform():
             
     def concat_text(self, data):
         store = []
+    
         for i in range(len(data)):
-            sentence1 = data["sentence_1"][i]
-            sentence2 = data["sentence_2"][i]
+            sentence1 = data["sentence_1"].iloc[i]
+            sentence2 = data["sentence_2"].iloc[i]
 
             concat_sentence = sentence1 + " [SEP] " + sentence2
             store.append(concat_sentence)
