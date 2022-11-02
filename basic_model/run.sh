@@ -8,5 +8,6 @@ python3 main.py \
 --reg_plus_clasifi_flag=True --clasifi_2_clasifi_flag=$False \
 --clasifi_2_reg_flag=$False \
 --lr=5e-6 --eps=1e-8 \
+--hidden_dropout_prob=0.2 --weight_decay=0.07605 --beta=0.7204 \
 --save_path=savedModel-3-realover.pt --result_path=sub-realover.csv \
 --train_data_path=/opt/ml/code/real_over.csv --val_data_path=/opt/ml/code/dev_space.csv --test_data_path=/opt/ml/code/test_space.csv

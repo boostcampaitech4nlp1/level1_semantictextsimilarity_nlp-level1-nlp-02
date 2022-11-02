@@ -43,6 +43,9 @@ if __name__ == "__main__":
     parser.add_argument("--train_data_path", type=str)
     parser.add_argument("--val_data_path", type=str)
     parser.add_argument("--test_data_path", type=str)
+    parser.add_argument("--hidden_dropout_prob", type=float)
+    parser.add_argument("--weight_decay", type=float)
+    parser.add_argument("--beta", type=float)
     
     ## Set seed
     set_seeds()

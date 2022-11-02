@@ -34,6 +34,7 @@ class Trainer():
             self.model.parameters(),
             lr = self.config.lr,
             eps = self.config.eps,
+            weight_decay = self.config.weight_decay
         )
 
         ## Loss Function
@@ -43,6 +44,9 @@ class Trainer():
 
         self.early_stopping = EarlyStopping(path = config.save_path, patience = 7, verbose = True)
         
+        ## beta
+        self.beta = self.config.beta
+
     def train(self,epoch):
         batch_count = 0
         train_loss_store = []
@@ -138,7 +142,7 @@ class Trainer():
     def reg_plus_clasifi(self, out_score, out_bi_class, score, bi_class):
         loss_regression = self.regression_loss_fn(out_score.float(), score.float())
         loss_classification = self.bi_classification_loss_fn(out_bi_class.float(), bi_class.float())
-        loss = 0.7 * loss_regression + 0.3 * loss_classification
+        loss = self.beta * loss_regression + (1-self.beta) * loss_classification
         return loss
     
     def only_reg(self, out_score, score):

@@ -6,7 +6,7 @@ import torch.nn as nn
 ###################################
 
 class Base(nn.Module):
-    def __init__(self, transformer, first_in):
+    def __init__(self, transformer, first_in, hidden_dropout_prob):
         super(Base, self).__init__()
 
         ## Dimension
@@ -31,7 +31,10 @@ class Base(nn.Module):
         self.layer1_1 = nn.Linear(self.first_in, self.h_dim)
         self.layer2_1 = nn.Linear(self.h_dim, self.h_dim)
         self.layer_out_1 = nn.Linear(self.h_dim, self.classification_dim)
-    
+
+        ## dropout layers
+        self.dropout = nn.Dropout(p=hidden_dropout_prob)
+
     def forward(self, idz, attentions, token_types):
         x = self.transformer(
             idz,
@@ -42,7 +45,7 @@ class Base(nn.Module):
 
         ## Regression layer
         x_regression = self.relu(self.layer1(x))
-        x_regression = self.relu(self.layer2(x_regression))
+        x_regression = self.dropout(self.relu(self.layer2(x_regression)))
         score = self.layer_out(x_regression)
 
         ## Classification layer

@@ -24,17 +24,17 @@ class Selection():
             if self.config.reg_plus_clasifi_flag or self.config.only_reg_flag:
                 self.model = ModelBase.Base(self.transformer, self.small_first_in)
             if self.config.only_clasifi_flag:
-                self.model = ModelFullClasifi.FullClasifi(self.transformer, self.small_first_in)
+                self.model = ModelFullClasifi.FullClasifi(self.transformer, self.small_first_in, self.config.hidden_dropout_prob)
         elif model_name in self.base:
             if self.config.reg_plus_clasifi_flag or self.config.only_reg_flag:
                 self.model = ModelBase.Base(self.transformer, self.base_first_in)
             if self.config.only_clasifi_flag:
-                self.model = ModelFullClasifi.FullClasifi(self.transformer, self.base_first_in)
+                self.model = ModelFullClasifi.FullClasifi(self.transformer, self.base_first_in, self.config.hidden_dropout_prob)
         elif model_name in self.large:
             if self.config.reg_plus_clasifi_flag or self.config.only_reg_flag:
                 self.model = ModelBase.Base(self.transformer, self.large_first_in)
             if self.config.only_clasifi_flag:
-                self.model = ModelFullClasifi.FullClasifi(self.transformer, self.large_first_in)
+                self.model = ModelFullClasifi.FullClasifi(self.transformer, self.large_first_in, self.config.hidden_dropout_prob)
             
     def get(self):
         return self.model, self.tokenizer
