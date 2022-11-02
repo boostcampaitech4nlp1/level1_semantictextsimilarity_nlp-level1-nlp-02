@@ -18,7 +18,8 @@ class Test():
         
         ## Get model and tokenizer
         selection = Selection(self.config.model_name, self.config)
-        self.model, self.tokenizer = selection.get()
+        self.model = selection.get()
+        self.tokenizer = selection.unk_tokenizer_add(config)
         self.model.load_state_dict(torch.load(self.config.save_path))
         self.model.to(self.device)
         
@@ -53,8 +54,9 @@ class Test():
                     print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
                     print("We don't support classification task!")
                     break
-            self.test_score_store.append(round(out_score.cpu().numpy()[0][0], 1))
-    
+            #self.test_score_store.append(round(out_score.cpu().numpy()[0][0], 1))
+            self.test_score_store.append(out_score.cpu().numpy[0][0])
+            
     def make_submission_file(self):
         self.test_data["target"] = self.test_score_store
         final_output = self.test_data.loc[:, ["id", "target"]]

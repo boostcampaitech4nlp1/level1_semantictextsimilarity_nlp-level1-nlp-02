@@ -43,6 +43,7 @@ class DataPlatform():
             
     def concat_text(self, data):
         store = []
+    
         for i in range(len(data)):
             sentence1 = data["sentence_1"].iloc[i]
             sentence2 = data["sentence_2"].iloc[i]

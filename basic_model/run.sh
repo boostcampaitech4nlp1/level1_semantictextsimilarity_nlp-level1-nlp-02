@@ -7,6 +7,7 @@ python3 main.py \
 --only_clasifi_flag=$False --only_reg_flag=$False \
 --reg_plus_clasifi_flag=$False --clasifi_2_clasifi_flag=$False --reg_plus_multi_clasifi_flag=True \
 --clasifi_2_reg_flag=$False \
+--under_sampling_flag=True --mx_label_size=500 \
 --lr=5e-6 --eps=1e-8 \
 --hidden_dropout_prob=0.2 --weight_decay=0.07605 --beta=0.3 \
 --save_path=/opt/ml/saved/koelectra_multi_clasifi_test.pt --result_path=/opt/ml/saved/koelectra_multi_clasifi_test.csv \
