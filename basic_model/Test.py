@@ -47,8 +47,8 @@ class Test():
             token_types = torch.tensor(token_types).to(self.device)
             
             with torch.no_grad():
-                if self.config.reg_plus_clasifi_flag or self.config.only_reg_flag:
-                    out_score, _ = self.model(idz, attentions, token_types)
+                if self.config.reg_plus_clasifi_flag or self.config.only_reg_flag or self.config.reg_plus_multi_clasifi_flag:
+                    out_score, _, _ = self.model(idz, attentions, token_types)
                 else:
                     print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
                     print("We don't support classification task!")

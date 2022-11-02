@@ -32,6 +32,7 @@ if __name__ == "__main__":
     parser.add_argument("--only_clasifi_flag", type=bool)
     parser.add_argument("--only_reg_flag", type=bool)
     parser.add_argument("--reg_plus_clasifi_flag", type=bool)
+    parser.add_argument("--reg_plus_multi_clasifi_flag", type=bool)
     parser.add_argument("--clasifi_2_clasifi_flag", type=bool)
     parser.add_argument("--clasifi_2_reg_flag", type=bool)
     parser.add_argument("--under_sampling_flag", type=bool)

@@ -34,6 +34,8 @@ class DataPlatform():
         ## Get Label & Label encoding
         if self.config.only_reg_flag or self.config.reg_plus_clasifi_flag:
             self.make_reg_clasi_data_loader()
+        elif self.config.reg_plus_multi_clasifi_flag:
+            self.make_reg_multi_clasi_data_loader()
         else:
             self.labels = None
             self.label_encoding_full()
@@ -42,8 +44,8 @@ class DataPlatform():
     def concat_text(self, data):
         store = []
         for i in range(len(data)):
-            sentence1 = data["sentence_1"][i]
-            sentence2 = data["sentence_2"][i]
+            sentence1 = data["sentence_1"].iloc[i]
+            sentence2 = data["sentence_2"].iloc[i]
 
             concat_sentence = sentence1 + " [SEP] " + sentence2
             store.append(concat_sentence)
@@ -64,6 +66,25 @@ class DataPlatform():
         '''''
         train = DataRegClasi(self.train_data, self.tokenizer, self.config)
         val = DataRegClasi(self.val_data, self.tokenizer, self.config)
+
+        self.train_loader = DataLoader(
+            train,
+            shuffle = True,
+            batch_size = self.config.batch_size,
+        )
+        self.val_loader = DataLoader(
+            val,
+            shuffle = True,
+            batch_size = self.config.batch_size,
+        )
+
+    def make_reg_multi_clasi_data_loader(self):
+        '''''
+        Dataset will return score and multi class
+        It will be used for regression and classification
+        '''''
+        train = DataRegMultiClasi(self.train_data, self.tokenizer, self.config)
+        val = DataRegMultiClasi(self.val_data, self.tokenizer, self.config)
 
         self.train_loader = DataLoader(
             train,
@@ -161,6 +182,32 @@ class DataRegClasi(Dataset):
 
         ## input_ids, attention_mask, score, T/F
         return input_ids, attention_mask, token_type_ids, list(self.data["label"])[idx], list(self.data["binary-label"])[idx]
+
+    def __len__(self):
+        return len(self.data)
+
+class DataRegMultiClasi(Dataset):
+    def __init__(self, data, tokenizer, config):
+        self.data = data
+        self.tokenizer = tokenizer
+        self.config = config
+
+    def __getitem__(self, idx):
+        out = self.tokenizer.encode_plus(
+            list(self.data["concat-text"])[idx],
+            return_tensors="pt",
+            max_length=self.config.mx_token_size,
+            truncation=True,
+            pad_to_max_length=True,
+            add_special_tokens=True,
+        )
+
+        input_ids = out["input_ids"][0]
+        attention_mask = out["attention_mask"][0]
+        token_type_ids = out["token_type_ids"][0]
+
+        ## input_ids, attention_mask, score, T/F
+        return input_ids, attention_mask, token_type_ids, list(self.data["label"])[idx], list(self.data["multi-label"])[idx]
 
     def __len__(self):
         return len(self.data)

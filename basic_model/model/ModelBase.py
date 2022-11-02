@@ -13,6 +13,7 @@ class Base(nn.Module):
         self.first_in = first_in
         self.h_dim = 512
         self.classification_dim = 1
+        self.multi_classification_dim = 6
         self.score_dim = 1
 
         ## Transformer model
@@ -32,6 +33,11 @@ class Base(nn.Module):
         self.layer2_1 = nn.Linear(self.h_dim, self.h_dim)
         self.layer_out_1 = nn.Linear(self.h_dim, self.classification_dim)
 
+        ## Multi-Classification layers
+        self.layer1_2 = nn.Linear(self.first_in, self.h_dim)
+        self.layer2_2 = nn.Linear(self.h_dim, self.h_dim)
+        self.layer_out_2 = nn.Linear(self.h_dim, self.multi_classification_dim)
+
         ## dropout layers
         self.dropout = nn.Dropout(p=hidden_dropout_prob)
 
@@ -50,7 +56,12 @@ class Base(nn.Module):
 
         ## Classification layer
         x_classification = self.relu(self.layer1_1(x))
-        x_classification = self.relu(self.layer2_1(x_classification))
+        x_classification = self.dropout(self.relu(self.layer2_1(x_classification)))
         bi_class = self.sigmoid(self.layer_out_1(x_classification))
 
-        return score, bi_class
+        ## Mutli-Classification layer
+        x_multi_classification = self.relu(self.layer1_2(x))
+        x_multi_classification = self.dropout(self.relu(self.layer2_2(x_multi_classification)))
+        multi_class = self.layer_out_2(x_multi_classification)
+
+        return score, bi_class, multi_class
