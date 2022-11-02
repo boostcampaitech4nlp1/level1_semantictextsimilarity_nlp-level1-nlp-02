@@ -69,7 +69,7 @@ if __name__ == "__main__":
     ##############
     ## Training ##
     ##############
-    trainer = Trainer(model, train_loader, val_loader, config)
+    trainer = Trainer(model, train_loader, val_loader, config, tokenizer)
     for e in range(config.epoch):
         print("##########################################################")
         print("----------------------epoch {} start----------------------".format(e + 1))

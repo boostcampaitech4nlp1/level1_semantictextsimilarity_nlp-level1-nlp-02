@@ -1,21 +1,21 @@
 import datetime
-
 import numpy as np
 import pandas as pd
-
 import torch
+import warnings
 import torch.nn.functional as F
 import torch.nn as nn
 from torch.utils.data import Dataset, DataLoader
 from transformers import AdamW
-
 from utils.Earlystopping import EarlyStopping
+
+warnings.filterwarnings("ignore")
 
 #############
 ## Trainer ## 
 #############
 class Trainer():
-    def __init__(self, model, train_loader, val_loader, config):
+    def __init__(self, model, train_loader, val_loader, config, tokenizer):
         ## Device
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -24,6 +24,7 @@ class Trainer():
 
         ## Model
         self.model = model.to(self.device)
+        self.tokenizer = tokenizer
 
         ## Data Loader
         self.train_loader = train_loader
@@ -91,8 +92,10 @@ class Trainer():
             ## Evaluation step
             if not batch_count % 40: 
                 eval_loss = self.eval()
+                pearson = self.pearson_score()
                 print("Batch {} over".format(batch_count * self.config.batch_size))
                 print("@@@@@@ Now evaluation loss : {} @@@@@@@".format(eval_loss))
+                print("!!!!!! Now pearson score : {} !!!!!!!".format(pearson))
                 # self.save() # early stopping 코드에서 현재 최고 모델을 저장
                 if epoch >= 5 and self.early_stopping.early_stop:
                     print("Early stopping")
@@ -139,6 +142,47 @@ class Trainer():
             
         return total_loss / total_count
 
+    def pearson_score(self):
+        ## Get data
+        val_data = pd.read_csv(self.config.val_data_path)
+        self.concat_text(val_data)
+        val_text = val_data["concat-text"]
+        
+        store_result = []
+        
+        for i in range(len(val_data)):
+            now_text = val_text[i]
+            
+            out = self.tokenizer.encode_plus(
+                now_text,
+                max_length=self.config.mx_token_size,
+                truncation=True,
+                pad_to_max_length=True,
+                add_special_tokens=True,
+            )
+
+            idz = [out["input_ids"]]
+            attentions = [out["attention_mask"]]
+            token_types = [out["token_type_ids"]]
+
+            idz = torch.tensor(idz).to(self.device)
+            attentions = torch.tensor(attentions).to(self.device)
+            token_types = torch.tensor(token_types).to(self.device)
+            
+            with torch.no_grad():
+                if self.config.reg_plus_clasifi_flag or self.config.only_reg_flag:
+                    out_score, _ = self.model(idz, attentions, token_types)
+                else:
+                    print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+                    print("We don't support classification task!")
+                    break
+            store_result.append(round(out_score.cpu().numpy()[0][0], 1))
+        
+        ## Get pearson score
+        ground_truth = val_data["label"].to_numpy()
+        
+        return np.corrcoef(store_result, ground_truth)[0, 1]
+    
     def reg_plus_clasifi(self, out_score, out_bi_class, score, bi_class):
         loss_regression = self.regression_loss_fn(out_score.float(), score.float())
         loss_classification = self.bi_classification_loss_fn(out_bi_class.float(), bi_class.float())
@@ -155,11 +199,16 @@ class Trainer():
         loss = 0.7 * loss_multi_classification# + 0.3 * loss_classification
         return loss
     
-    def clasifi_2_reg(self):
-        return
-    
-    def clasifi_2_clasifi(self):
-        return
+    def concat_text(self, data):
+        store = []
+        for i in range(len(data)):
+            sentence1 = data["sentence_1"][i]
+            sentence2 = data["sentence_2"][i]
+
+            concat_sentence = sentence1 + " [SEP] " + sentence2
+            store.append(concat_sentence)
+        
+        data["concat-text"] = store
     
     def save(self):
         torch.save(self.model.state_dict(), self.config.save_path)
