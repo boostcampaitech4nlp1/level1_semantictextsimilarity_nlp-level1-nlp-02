@@ -19,15 +19,15 @@ class Prediction():
         self.test_text = self.test_data["concat-text"]
         
         self.transformer1 = AutoModel.from_pretrained(model1_name)
-        self.tokenizer1 = AutoTokenizer.from_pretrained(model2_name)
+        self.tokenizer1 = AutoTokenizer.from_pretrained(model1_name)
         
-        self.transformer2 = AutoModel.from_pretrained(model1_name)
+        self.transformer2 = AutoModel.from_pretrained(model2_name)
         self.tokenizer2 = AutoTokenizer.from_pretrained(model2_name)
         
         ## Here we need to add special token
         
         self.small = ["klue/roberta-small", "beomi/KcELECTRA-small", "monologg/koelectra-small-v3-discriminator"]
-        self.base = ["klue/roberta-base", "beomi/KcELECTRA-base-v2022", "monologg/koelectra-base-v3-discriminator", "beomi/kcbert-base", "jinmang2/kpfbert"]
+        self.base = ["klue/roberta-base", "beomi/KcELECTRA-base-v2022", "beomi/KcELECTRA-base", "monologg/koelectra-base-v3-discriminator", "beomi/kcbert-base", "jinmang2/kpfbert"]
         self.large = ["klue/roberta-large"]
         
         self.small_first_in = 256
@@ -38,14 +38,14 @@ class Prediction():
         self.model2 = None
         
         if model1_name in self.small:
-            self.model1 = ModelBase.Base(self.transformer1, self.samll_first_in)
+            self.model1 = ModelBase.Base(self.transformer1, self.small_first_in)
         elif model1_name in self.base:
             self.model1 = ModelBase.Base(self.transformer1, self.base_first_in)
         elif model1_name in self.large:
             self.model1 = ModelBase.Base(self.transformer1, self.large_first_in)
         
         if model2_name in self.small:
-            self.model2 = ModelBase.Base(self.transformer2, self.samll_first_in)
+            self.model2 = ModelBase.Base(self.transformer2, self.small_first_in)
         elif model2_name in self.base:
             self.model2 = ModelBase.Base(self.transformer2, self.base_first_in)
         elif model2_name in self.large:
@@ -53,7 +53,8 @@ class Prediction():
         
         self.model1.load_state_dict(torch.load(model1_path))
         self.model2.load_state_dict(torch.load(model2_path))
-        
+        self.model1.to(self.device)
+        self.model2.to(self.device)
         
     def concat_text(self, data):
         store = []
@@ -72,13 +73,14 @@ class Prediction():
         self.slack_nsmc = ["nsmc-sampled", "nsmc-rtt", "slack-rtt", "slack-sampled"]
         
         for i in range(len(self.test_data)):
-            now_test = self.test_text[i]
+            now_text = self.test_text[i]
             if self.test_data["source"][i] in self.slack_nsmc:
                 out = self.tokenizer1.encode_plus(
                     max_length=256,
                     truncation=True,
                     pad_to_max_length=True,
                     add_special_tokens=True,
+                    text = now_text
                 )
             else:
                 out = self.tokenizer2.encode_plus(
@@ -86,6 +88,7 @@ class Prediction():
                     truncation=True,
                     pad_to_max_length=True,
                     add_special_tokens=True,
+                    text = now_text
                 )
 
             idz = [out["input_ids"]]
@@ -98,7 +101,7 @@ class Prediction():
                 
             
             with torch.no_grad():
-                if self.test_data["source"][i] == "nsmc-sampled" or self.test_data["source"][i] == "slack-rtt":
+                if self.test_data["source"][i] in self.slack_nsmc:
                     out_score, _ = self.model1(idz, attentions, token_types)
                 else:
                     out_score, _ = self.model2(idz, attentions, token_types)
