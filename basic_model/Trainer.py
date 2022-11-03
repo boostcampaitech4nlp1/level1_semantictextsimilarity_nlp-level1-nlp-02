@@ -8,7 +8,7 @@ import torch.nn as nn
 from torch.utils.data import Dataset, DataLoader
 from transformers import AdamW
 from utils.Earlystopping import EarlyStopping
-
+import sys
 warnings.filterwarnings("ignore")
 
 #############
@@ -48,10 +48,10 @@ class Trainer():
         ## beta
         self.beta = self.config.beta
 
-    def train(self,epoch):
+    def train(self,epoch,f):
         batch_count = 0
         train_loss_store = []
-
+        pearson_lst = []
         for idz, attentions, token_types, score, bi_or_multi_class in self.train_loader:
             ## Load to cpu or gpu
             idz = idz.to(self.device)
@@ -74,8 +74,10 @@ class Trainer():
                 except:
                     continue
             elif self.config.reg_plus_multi_clasifi_flag:
-                loss = self.reg_plus_multi_clasifi(out_score, out_multi_class, score, bi_or_multi_class)
-        
+                try:
+                    loss = self.reg_plus_multi_clasifi(out_score, out_multi_class, score, bi_or_multi_class)
+                except:
+                    continue
             elif self.config.only_reg_flag:
                 loss = self.only_reg(out_score, score)
             elif self.config.only_clasifi_flag:
@@ -92,18 +94,23 @@ class Trainer():
 
             ## +1 Batch count
             batch_count += 1
-
+            
             ## Evaluation step
-            if not batch_count % 40: 
+            if not batch_count % 400: 
                 eval_loss = self.eval()
                 pearson = self.pearson_score()
                 print("Batch {} over".format(batch_count * self.config.batch_size))
                 print("@@@@@@ Now evaluation loss : {} @@@@@@@".format(eval_loss))
+                pearson_lst.append(pearson)
+                print(pearson,file = f)
                 print("!!!!!! Now pearson score : {} !!!!!!!".format(pearson))
                 # self.save() # early stopping 코드에서 현재 최고 모델을 저장
                 if epoch >= 5 and self.early_stopping.early_stop:
                     print("Early stopping")
+                    self.early_stopping.flag = True
                     break
+
+        print(f"{epoch}'s max pearson is {max(pearson_lst)}",file = f)
 
     def eval(self):
         total_loss = 0

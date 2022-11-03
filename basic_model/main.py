@@ -8,7 +8,7 @@ from Data import DataPlatform
 from ModelSelection import Selection
 from Trainer import Trainer
 from Test import Test
-
+import sys
 def set_seeds(seed=random.randrange(1, 10000)):
     random.seed(seed)
     os.environ['PYTHONHASHSEED'] = str(seed)
@@ -72,11 +72,17 @@ if __name__ == "__main__":
     ## Training ##
     ##############
     trainer = Trainer(model, train_loader, val_loader, config, tokenizer)
+    f = open('/opt/ml/saved/pearson.txt', 'w')
+    print(config.model_name,file=f)
     for e in range(config.epoch):
+        trainer.early_stopping.counter = 0
         print("##########################################################")
         print("----------------------epoch {} start----------------------".format(e + 1))
-        trainer.train(e)
-    
+        trainer.train(e,f)
+        if trainer.early_stopping.flag:
+            break
+          
+    f.close()
     print("#########################################")
     print("#########################################")
     print("--------------- Finished ----------------")
