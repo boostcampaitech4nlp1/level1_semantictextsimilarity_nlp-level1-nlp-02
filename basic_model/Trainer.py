@@ -205,7 +205,7 @@ class Trainer():
     
     def reg_plus_multi_clasifi(self, out_score, out_multi_class, score, bi_or_multi_class):
         loss_regression = self.regression_loss_fn(out_score.float(), score.float())
-        loss_multi_classification = self.multi_classification_loss_fn(out_multi_class, bi_or_multi_class) ## multi-class classification -> 이게 되나? 차원이 맞는가
+        loss_multi_classification = self.multi_classification_loss_fn(out_multi_class, bi_or_multi_class)
         loss = self.beta * loss_regression + (1-self.beta) * loss_multi_classification
         return loss
     
