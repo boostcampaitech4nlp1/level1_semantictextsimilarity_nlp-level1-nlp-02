@@ -72,17 +72,18 @@ if __name__ == "__main__":
     ## Training ##
     ##############
     trainer = Trainer(model, train_loader, val_loader, config, tokenizer)
-    f = open('/opt/ml/saved/pearson.txt', 'w')
-    print(config.model_name,file=f)
+    # f = open('/opt/ml/saved/pearson.txt', 'w')
+    # print(config.model_name,file=f)
+    pearson_lst = [-0.5]
     for e in range(config.epoch):
-        trainer.early_stopping.counter = 0
+        # trainer.early_stopping.counter = 0
         print("##########################################################")
         print("----------------------epoch {} start----------------------".format(e + 1))
-        trainer.train(e,f)
-        if trainer.early_stopping.flag:
-            break
+        trainer.train(e,pearson_lst)
+        # if trainer.early_stopping.flag:
+        #     break
           
-    f.close()
+    # f.close()
     print("#########################################")
     print("#########################################")
     print("--------------- Finished ----------------")

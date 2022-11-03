@@ -43,15 +43,15 @@ class Trainer():
         self.bi_classification_loss_fn = nn.BCELoss().to(self.device)
         self.multi_classification_loss_fn = nn.CrossEntropyLoss().to(self.device)
 
-        self.early_stopping = EarlyStopping(path = config.save_path, patience = 7, verbose = True)
+        # self.early_stopping = EarlyStopping(path = config.save_path, patience = 7, verbose = True)
         
         ## beta
         self.beta = self.config.beta
 
-    def train(self,epoch,f):
+    def train(self,epoch,pearson_lst):
         batch_count = 0
         train_loss_store = []
-        pearson_lst = []
+        self.pearson_lst = pearson_lst
         for idz, attentions, token_types, score, bi_or_multi_class in self.train_loader:
             ## Load to cpu or gpu
             idz = idz.to(self.device)
@@ -96,21 +96,26 @@ class Trainer():
             batch_count += 1
             
             ## Evaluation step
-            if not batch_count % 400: 
+            if not batch_count % 100: 
                 eval_loss = self.eval()
                 pearson = self.pearson_score()
                 print("Batch {} over".format(batch_count * self.config.batch_size))
                 print("@@@@@@ Now evaluation loss : {} @@@@@@@".format(eval_loss))
-                pearson_lst.append(pearson)
-                print(pearson,file = f)
-                print("!!!!!! Now pearson score : {} !!!!!!!".format(pearson))
+                
+                if pearson > max(self.pearson_lst):
+                    self.save()
+                    print("!!!!!! New pearson score : {} !!!!!!!".format(pearson))
+                    self.pearson_lst.append(pearson)
+                    print(self.pearson_lst)
+                    print("")
+                
                 # self.save() # early stopping 코드에서 현재 최고 모델을 저장
-                if epoch >= 5 and self.early_stopping.early_stop:
-                    print("Early stopping")
-                    self.early_stopping.flag = True
-                    break
+                # if epoch >= 5 and self.early_stopping.early_stop:
+                #     print("Early stopping")
+                #     self.early_stopping.flag = True
+                #     break
 
-        print(f"{epoch}'s max pearson is {max(pearson_lst)}",file = f)
+        # print(f"{epoch}'s max pearson is {max(pearson_lst)}",file = f)
 
     def eval(self):
         total_loss = 0
@@ -152,7 +157,7 @@ class Trainer():
             ## Data size
             total_count += self.config.batch_size
             
-        self.early_stopping(total_loss/total_count,self.model)
+        # self.early_stopping(total_loss/total_count,self.model)
             
         return total_loss / total_count
 
@@ -205,7 +210,7 @@ class Trainer():
     
     def reg_plus_multi_clasifi(self, out_score, out_multi_class, score, bi_or_multi_class):
         loss_regression = self.regression_loss_fn(out_score.float(), score.float())
-        loss_multi_classification = self.multi_classification_loss_fn(out_multi_class, bi_or_multi_class)
+        loss_multi_classification = self.multi_classification_loss_fn(out_multi_class, bi_or_multi_class) ## multi-class classification -> 이게 되나? 차원이 맞는가
         loss = self.beta * loss_regression + (1-self.beta) * loss_multi_classification
         return loss
     
