@@ -68,10 +68,12 @@ class Prediction():
     
     def pred(self):
         self.test_score_store = []
+        self.patition = ["patition-sampled", "patition-rtt"]
+        self.slack_nsmc = ["nsmc-sampled", "nsmc-rtt", "slack-rtt", "slack-sampled"]
         
         for i in range(len(self.test_data)):
             now_test = self.test_text[i]
-            if self.test_data["source"][i] == "nsmc-sampled" or self.test_data["source"][i] == "slack-rtt":
+            if self.test_data["source"][i] in self.slack_nsmc:
                 out = self.tokenizer1.encode_plus(
                     max_length=256,
                     truncation=True,
