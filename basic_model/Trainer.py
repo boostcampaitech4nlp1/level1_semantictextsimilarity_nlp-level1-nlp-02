@@ -69,15 +69,9 @@ class Trainer():
             ## Train according to the method
             ## Caculate the loss
             if self.config.reg_plus_clasifi_flag:
-                try:
-                    loss = self.reg_plus_clasifi(out_score, out_bi_class, score, bi_or_multi_class)
-                except:
-                    continue
+                loss = self.reg_plus_clasifi(out_score, out_bi_class, score, bi_or_multi_class)
             elif self.config.reg_plus_multi_clasifi_flag:
-                try:
-                    loss = self.reg_plus_multi_clasifi(out_score, out_multi_class, score, bi_or_multi_class)
-                except:
-                    continue
+                loss = self.reg_plus_multi_clasifi(out_score, out_multi_class, score, bi_or_multi_class)
             elif self.config.only_reg_flag:
                 loss = self.only_reg(out_score, score)
             elif self.config.only_clasifi_flag:

@@ -9,6 +9,7 @@ from ModelSelection import Selection
 from Trainer import Trainer
 from Test import Test
 import sys
+
 def set_seeds(seed=random.randrange(1, 10000)):
     random.seed(seed)
     os.environ['PYTHONHASHSEED'] = str(seed)

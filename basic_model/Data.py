@@ -17,7 +17,7 @@ class DataPlatform():
         self.train_data = pd.read_csv(config.train_data_path)
         self.val_data = pd.read_csv(config.val_data_path)
         self.test_data = pd.read_csv(config.test_data_path)
-        self.over_sampling_data = None
+        #self.over_sampling_data = None
 
         if self.config.under_sampling_flag:
             self.train_data = self.under_sampling(self.config.mx_label_size)
@@ -72,11 +72,13 @@ class DataPlatform():
             train,
             shuffle = True,
             batch_size = self.config.batch_size,
+            drop_last = True
         )
         self.val_loader = DataLoader(
             val,
             shuffle = True,
             batch_size = self.config.batch_size,
+            drop_last = True
         )
 
     def make_reg_multi_clasi_data_loader(self):
@@ -91,11 +93,13 @@ class DataPlatform():
             train,
             shuffle = True,
             batch_size = self.config.batch_size,
+            drop_last = True
         )
         self.val_loader = DataLoader(
             val,
             shuffle = True,
             batch_size = self.config.batch_size,
+            drop_last = True
         )
     
     def make_full_clasi_data_loader(self):
@@ -110,11 +114,13 @@ class DataPlatform():
             train,
             shuffle = True,
             batch_size = self.config.batch_size,
+            drop_last = True
         )
         self.val_loader = DataLoader(
             val,
             shuffle = True,
             batch_size = self.config.batch_size,
+            drop_last = True
         )
 
     def under_sampling(self, mx_size):
