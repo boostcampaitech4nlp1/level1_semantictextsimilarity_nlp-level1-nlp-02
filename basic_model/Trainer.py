@@ -100,7 +100,7 @@ class Trainer():
                     self.save()
                     print("!!!!!! New pearson score : {} !!!!!!!".format(pearson))
                     self.pearson_lst.append(pearson)
-                    print(self.pearson_lst)
+                    print(self.pearson_lst[-1])
                     print("")
                 
                 # self.save() # early stopping 코드에서 현재 최고 모델을 저장
@@ -112,9 +112,6 @@ class Trainer():
         # print(f"{epoch}'s max pearson is {max(pearson_lst)}",file = f)
 
     def eval(self):
-        total_loss = 0
-        total_count = 0
-
         total_loss = 0
         total_count = 0
         
