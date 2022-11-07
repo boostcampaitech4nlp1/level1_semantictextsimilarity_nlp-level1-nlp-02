@@ -44,6 +44,7 @@ class Selection():
         sentence = self.data['concat-text'].tolist()
         
         final_unk_lst = []
+        add_token_list = []
         
         for i in range(len(sentence)):
             token_lst = self.tokenizer.tokenize(sentence[i])
@@ -60,19 +61,13 @@ class Selection():
                         if unk_word not in final_unk_lst:
                             final_unk_lst.append(unk_word)
 
-        add_token_list = []
-
         for p in range(len(final_unk_lst)):
             unk_text = final_unk_lst[p]
             for q in range(len(unk_text)):
                 token, token_text = self.tokenizer.tokenize(unk_text[q]), unk_text[q]
                 if token == ['[UNK]']:
-                    if q == 0:
-                        add_token_list.append(token_text)
-                        add_token_list.append('##' + token_text)
-                    else:
-                        add_token_list.append(token_text)
-                        add_token_list.append('##' + token_text)
+                    add_token_list.append(token_text)
+                    add_token_list.append('##' + token_text)
                         
         real_unk_token = list(set(add_token_list))
         add_token_num = self.tokenizer.add_tokens(real_unk_token)
