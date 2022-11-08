@@ -1,7 +1,7 @@
 
 import torch
-from Data import DataPlatform
-from ModelSelection import Selection
+from data import DataPlatform
+from model_selection import Selection
 
 class Test():
     def __init__(self, config, data_platform):

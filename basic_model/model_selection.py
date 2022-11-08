@@ -1,6 +1,6 @@
 from transformers import AutoTokenizer, AutoModel
-from model import ModelBase, ModelFullClasifi
-from Data import DataPlatform
+from model import model_base, model_full_clasifi
+from data import DataPlatform
 import pandas as pd
 
 class Selection():
@@ -23,19 +23,19 @@ class Selection():
         ## Load Model
         if model_name in self.small:
             if self.config.reg_plus_clasifi_flag or self.config.only_reg_flag or self.config.reg_plus_multi_clasifi_flag:
-                self.model = ModelBase.Base(self.transformer, self.small_first_in, self.config.hidden_dropout_prob)
+                self.model = model_base.Base(self.transformer, self.small_first_in, self.config.hidden_dropout_prob)
             if self.config.only_clasifi_flag:
-                self.model = ModelFullClasifi.FullClasifi(self.transformer, self.small_first_in)
+                self.model = model_full_clasifi.FullClasifi(self.transformer, self.small_first_in)
         elif model_name in self.base:
             if self.config.reg_plus_clasifi_flag or self.config.only_reg_flag or self.config.reg_plus_multi_clasifi_flag:
-                self.model = ModelBase.Base(self.transformer, self.base_first_in, self.config.hidden_dropout_prob)
+                self.model = model_base.Base(self.transformer, self.base_first_in, self.config.hidden_dropout_prob)
             if self.config.only_clasifi_flag:
-                self.model = ModelFullClasifi.FullClasifi(self.transformer, self.base_first_in)
+                self.model = model_full_clasifi.FullClasifi(self.transformer, self.base_first_in)
         elif model_name in self.large:
             if self.config.reg_plus_clasifi_flag or self.config.only_reg_flag or self.config.reg_plus_multi_clasifi_flag:
-                self.model = ModelBase.Base(self.transformer, self.large_first_in, self.config.hidden_dropout_prob)
+                self.model = model_base.Base(self.transformer, self.large_first_in, self.config.hidden_dropout_prob)
             if self.config.only_clasifi_flag:
-                self.model = ModelFullClasifi.FullClasifi(self.transformer, self.large_first_in)
+                self.model = model_full_clasifi.FullClasifi(self.transformer, self.large_first_in)
         
     ## UNK tokenizer add
     def unk_tokenizer_add(self, config):
@@ -44,7 +44,6 @@ class Selection():
         sentence = self.data['concat-text'].tolist()
         
         final_unk_lst = []
-        add_token_list = []
         
         for i in range(len(sentence)):
             token_lst = self.tokenizer.tokenize(sentence[i])
@@ -61,13 +60,19 @@ class Selection():
                         if unk_word not in final_unk_lst:
                             final_unk_lst.append(unk_word)
 
+        add_token_list = []
+
         for p in range(len(final_unk_lst)):
             unk_text = final_unk_lst[p]
             for q in range(len(unk_text)):
                 token, token_text = self.tokenizer.tokenize(unk_text[q]), unk_text[q]
                 if token == ['[UNK]']:
-                    add_token_list.append(token_text)
-                    add_token_list.append('##' + token_text)
+                    if q == 0:
+                        add_token_list.append(token_text)
+                        add_token_list.append('##' + token_text)
+                    else:
+                        add_token_list.append(token_text)
+                        add_token_list.append('##' + token_text)
                         
         real_unk_token = list(set(add_token_list))
         add_token_num = self.tokenizer.add_tokens(real_unk_token)

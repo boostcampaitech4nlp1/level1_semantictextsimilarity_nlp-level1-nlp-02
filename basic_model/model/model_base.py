@@ -47,8 +47,8 @@ class Base(nn.Module):
             token_type_ids = token_types,
             attention_mask = attentions,
             return_dict = False,
-        )[0][:,0,:] # cls 토큰만 추출
-            
+        )[0][:,0,:]
+
         ## Regression layer
         x_regression = self.relu(self.layer1(x))
         x_regression = self.dropout(self.relu(self.layer2(x_regression)))
