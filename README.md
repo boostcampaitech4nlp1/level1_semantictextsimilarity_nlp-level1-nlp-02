@@ -114,4 +114,4 @@ level1_semantictextsimilarity_nlp-level1-nlp-02
 ```
 
 ## 📒 Wrap Up Report
-아직 안알랴줌
+[Wrap Up Report](https://balanced-sunshine-b47.notion.site/Wrap-Up-7173ce9940ed4da9822a7875e50807b1)
