@@ -112,6 +112,3 @@ level1_semantictextsimilarity_nlp-level1-nlp-02
 │   └── train.sh
 └── README.md
 ```
-
-## 📒 Wrap Up Report
-[Wrap Up Report](https://balanced-sunshine-b47.notion.site/Wrap-Up-7173ce9940ed4da9822a7875e50807b1)
